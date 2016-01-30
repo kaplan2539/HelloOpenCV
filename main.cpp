@@ -3,7 +3,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include <iostream>
-#include <stdio.h>
+#include <string>
 
 using namespace cv;
 
@@ -14,12 +14,12 @@ String face_cascade_name =
 CascadeClassifier face_cascade;
 std::string window_name = "Hello OpenCV";
 
-std::string text = "frame rate: ";
+std::string text = "initializing...";
 int fontFace = FONT_HERSHEY_PLAIN;
 double fontScale = 1;
 int thickness = 2;
 
-int frameWidth = 160;
+int frameWidth  = 160;
 int frameHeight = 120;
 
 int main( int argc, const char** argv )
@@ -61,6 +61,19 @@ void detectAndDisplay( Mat frame )
   std::vector<Rect> faces;
   Mat frame_gray;
 
+  static int n_frames=0;
+  static int frame_probe=30;
+  static double last_ticks = getTickCount();
+
+  if(n_frames >= frame_probe) {
+  	double fps = n_frames / (getTickCount() - last_ticks) * getTickFrequency();
+  	std::stringstream ss;
+  	ss << fps << " fps";
+  	text = ss.str();
+	n_frames=0;
+	last_ticks = getTickCount();
+  }
+
   cvtColor( frame, frame_gray, CV_BGR2GRAY );
   //equalizeHist( frame_gray, frame_gray );
 
@@ -83,4 +96,6 @@ void detectAndDisplay( Mat frame )
         Scalar::all(255), thickness, 8);
 
   imshow( window_name, frame );
+
+  n_frames++;
 }
