@@ -6,8 +6,8 @@ using namespace cv;
 
 int main (int argc, const char * argv[])
 {
-	VideoCapture cap(CV_CAP_ANY);
-	cap.set(CV_CAP_PROP_FRAME_WIDTH, 160);
+	VideoCapture cap(1);
+	cap.set(CV_CAP_PROP_FRAME_WIDTH, 160 );
 	cap.set(CV_CAP_PROP_FRAME_HEIGHT, 120);    
 	if (!cap.isOpened())
 		return -1;
@@ -24,7 +24,7 @@ int main (int argc, const char * argv[])
 			continue;
 
 		vector<Rect> found, found_filtered;
-		hog.detectMultiScale(img, found, 0, Size(16,16), Size(80,80), 1.05, 2);
+		hog.detectMultiScale(img, found, 0.0, Size(32,60), Size(64,120), 1.05, 2);
 
 		size_t i, j;
 		for (i=0; i<found.size(); i++)

@@ -10,7 +10,8 @@ using namespace cv;
 void detectAndDisplay( Mat frame );
 
 String face_cascade_name =
-  "/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml";
+  //"/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml";
+  "/usr/share/opencv/haarcascades/haarcascade_fullbody.xml";
 CascadeClassifier face_cascade;
 std::string window_name = "Hello OpenCV";
 
@@ -32,7 +33,7 @@ int main( int argc, const char** argv )
     return -1;
   };
 
-  capture = cvCaptureFromCAM( -1 );
+  capture = cvCaptureFromCAM(0);
   if( capture )
   {
     cvSetCaptureProperty(capture,CV_CAP_PROP_FRAME_WIDTH,frameWidth);
@@ -78,7 +79,7 @@ void detectAndDisplay( Mat frame )
   //equalizeHist( frame_gray, frame_gray );
 
   face_cascade.detectMultiScale( frame_gray, faces, 1.1, 2,
-                                 0|CV_HAAR_SCALE_IMAGE, Size(30, 30) );
+                                 0|CV_HAAR_SCALE_IMAGE, Size(10, 10) );
 
   for( size_t i = 0; i < faces.size(); i++ )
   {
