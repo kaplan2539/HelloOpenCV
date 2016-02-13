@@ -1,5 +1,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/features2d/features2d.hpp"
 #include <iostream>
 #include <stdio.h>
 
@@ -81,7 +82,7 @@ void showSingle(Mat &what)
   Mat histImage( hist_h, hist_w, CV_8UC3, Scalar( 0,0,0) );
 
   /// Normalize the result to [ 0, histImage.rows ]
-  normalize(hist, hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+  normalize(hist, hist, 1, NORM_MINMAX );
 
   /// Draw for each channel
   for( int i = 1; i < histSize; i++ )
@@ -96,12 +97,81 @@ void showSingle(Mat &what)
   imshow("single", histImage );
 }
 
+void calcCMS(Mat& I, int thresh,int &x, int &y)
+{
+    // accept only char type matrices
+    CV_Assert(I.depth() == CV_8U);
+
+    int channels = I.channels();
+
+    int nRows = I.rows;
+    int nCols = I.cols * channels;
+
+    int n_bins = 10;
+    int binw_x = I.cols / n_bins;
+    int binw_y = I.rows / n_bins;
+
+    int i,j;
+    uchar* p;
+    
+    float cms_x=0.0, cms_y=0.0, denom=0.0;
+    for( i = 0; i < nRows; ++i)
+    {
+        p = I.ptr<uchar>(i);
+        for ( j = 0; j < nCols; ++j)
+        {
+            if( p[j] > thresh ) {
+              cms_x += j*p[j];
+              cms_y += i*p[j];
+              denom += p[j];
+            }
+        }
+    }
+
+    x = cms_x / denom;
+    y = cms_y / denom;
+
+}
+
+void rebin(Mat &I, Mat &O, int binsize=20, int thresh=0)
+{
+    int channels = I.channels();
+
+    int iRows = I.rows;
+    int iCols = I.cols * channels;
+
+    int oRows = iRows / binsize;
+    int oCols = iCols / binsize;
+
+    O = Mat::zeros(oRows,oCols,CV_32F);
+
+    uchar *ip,*op;
+    for( int i = 0; i < iRows; ++i)
+    {
+        ip = I.ptr<uchar>(i);
+        op = O.ptr<uchar>( i/binsize );
+        for ( int j = 0; j < iCols; ++j)
+        {
+            if( ip[j] > thresh ) {
+              op[ j / binsize ] += ip[j];
+            }
+        }
+    }
+    normalize(O, O, 1.0, 0, NORM_MINMAX, -1, Mat() );
+}
+
 int main( int, char** argv )
 {
   CvCapture* capture;
   Mat src, dst, diff;
 
   capture = cvCaptureFromCAM( -1 );
+
+  // Set up the detector with default parameters.
+  SimpleBlobDetector detector;
+ 
+  // Detect blobs.
+  std::vector<KeyPoint> keypoints;
 
   if( capture )
   {
@@ -121,16 +191,36 @@ int main( int, char** argv )
       bool uniform = true; bool accumulate = false;
 
       diff=bgr_planes[2]-bgr_planes[0]-bgr_planes[1];
-      for(int i=0; i<diff.rows; i++)
-        for(int j=0; j<diff.cols; j++) {
-      }
 
-      imshow("blue", bgr_planes[0] );
-      imshow("diff", diff );
-      imshow("red", bgr_planes[2] );
+      int x,y;
+      calcCMS(diff,20,x,y);
+      circle(src, Point(x,y), 10, Scalar(255,255,255));
 
-      showHist(src);
-      showSingle(diff);
+//      imshow("blue", bgr_planes[0] );
+//      imshow("green", bgr_planes[1] );
+//      imshow("red", bgr_planes[2] );
+//      imshow("diff", diff );
+
+      Mat small,scaled,normed;
+    
+      normalize(diff, diff, 255, 0, NORM_MINMAX, -1, Mat() );
+
+//      rebin(diff,small);
+      imshow("src", src );
+
+//      detector.detect( small, keypoints);
+
+//      resize(small,scaled,diff.size());
+//      imshow("small", scaled );
+
+//      for(int i=0; i<keypoints.size(); i++) {
+//          KeyPoint kp = keypoints[i];
+//          printf( "%d %d\n", kp.pt.x, kp.pt.y );
+//      }
+
+
+//      showHist(src);
+//      showSingle(diff);
       int c = waitKey(1);
       if( (char)c == 'c' ) {
         break;
